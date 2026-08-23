@@ -1,0 +1,92 @@
+# ============================================================================
+# Backup do CMakeLists.txt para o Simulador Desktop (Windows/Linux/macOS)
+# ============================================================================
+# Se desejar compilar a interface no PC (Simulador SDL2/Win32), renomeie este 
+# arquivo de volta para `CMakeLists.txt`.
+
+cmake_minimum_required(VERSION 3.18)
+project(lvgl_simulator C)
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+set(LVGL_VERSION "v9.5.0" CACHE STRING "LVGL version (git tag or branch)")
+set(UI_DIR "${CMAKE_SOURCE_DIR}/ui" CACHE PATH "Folder with the UI exported from the LVGL Editor")
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+
+include(FetchContent)
+FetchContent_Declare(
+  lvgl
+  GIT_REPOSITORY https://github.com/lvgl/lvgl.git
+  GIT_TAG ${LVGL_VERSION}
+  GIT_SHALLOW TRUE
+  SOURCE_SUBDIR "skip_add_subdirectory")
+
+FetchContent_GetProperties(lvgl)
+FetchContent_MakeAvailable(lvgl)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+if(WIN32)
+  set(LV_CONF_DEFAULTS "${CMAKE_SOURCE_DIR}/lv_conf_windows.defaults")
+else()
+  set(LV_CONF_DEFAULTS "${CMAKE_SOURCE_DIR}/lv_conf_sdl.defaults")
+endif()
+
+set(LV_CONF_PATH "${CMAKE_BINARY_DIR}/lv_conf.h")
+set(LV_CONF_TMP "${CMAKE_BINARY_DIR}/lv_conf.h.in")
+execute_process(
+  COMMAND ${Python3_EXECUTABLE}
+          "${lvgl_SOURCE_DIR}/scripts/generate_lv_conf.py"
+          --template "${lvgl_SOURCE_DIR}/lv_conf_template.h"
+          --defaults "${LV_CONF_DEFAULTS}"
+          --config   "${LV_CONF_TMP}"
+  RESULT_VARIABLE _conf_result
+  OUTPUT_VARIABLE _conf_output
+  ERROR_VARIABLE  _conf_output)
+if(NOT _conf_result EQUAL 0)
+  message(FATAL_ERROR "Failed to generate lv_conf.h:\n${_conf_output}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${LV_CONF_TMP}" "${LV_CONF_PATH}")
+
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${LV_CONF_DEFAULTS}")
+set(LV_BUILD_CONF_PATH "${LV_CONF_PATH}" CACHE PATH "" FORCE)
+
+set(CONFIG_LV_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CONFIG_LV_BUILD_DEMOS OFF CACHE BOOL "" FORCE)
+set(CONFIG_LV_USE_THORVG_INTERNAL OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(${lvgl_SOURCE_DIR} ${lvgl_BINARY_DIR})
+
+set(BACKEND_LIBS "")
+if(WIN32)
+  list(APPEND BACKEND_LIBS gdi32 user32)
+else()
+  find_package(SDL2 REQUIRED)
+  target_include_directories(lvgl SYSTEM PUBLIC ${SDL2_INCLUDE_DIRS})
+  list(APPEND BACKEND_LIBS ${SDL2_LIBRARIES})
+endif()
+
+set(UI_LIB "")
+if(EXISTS "${UI_DIR}/CMakeLists.txt")
+  add_subdirectory(${UI_DIR} ${CMAKE_BINARY_DIR}/ui)
+  set(UI_LIB lib-ui)
+endif()
+
+add_executable(${CMAKE_PROJECT_NAME} src/main.c src/hal.c)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE lvgl ${UI_LIB} ${BACKEND_LIBS})
+
+if(UI_LIB)
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE HAS_UI=1)
+endif()
+
+if(NOT WIN32)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE m pthread)
+endif()

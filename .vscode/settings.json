@@ -3,5 +3,9 @@
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "files.associations": {
     "*.h": "c"
-  }
+  },
+  "idf.customExtraVars": {},
+  "idf.currentSetup": "A:\\Program\\esp\\.espressif\\v6.0.2\\esp-idf",
+  "idf.portWin": "COM8",
+  "idf.flashType": "UART"
 }

@@ -1,0 +1,4 @@
+## ESP-IDF Component Manager Manifest
+## Declaração de dependência da biblioteca gráfica LVGL oficial
+dependencies:
+  lvgl/lvgl: "^9.2.2"

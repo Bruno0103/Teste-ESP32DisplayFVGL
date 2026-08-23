@@ -1,0 +1,39 @@
+# Configurações recomendadas do ESP-IDF para LVGL v9 no ESP32
+
+# Aumenta o tamanho da stack da tarefa principal app_main
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# Frequência do Tick do FreeRTOS para 1000 Hz (1ms)
+CONFIG_FREERTOS_HZ=1000
+
+# Otimizações de compilação
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Habilita o módulo de suporte a traduções e internacionalização (LVGL v9 Translation)
+# Necessário para as funções lv_translation_add_static e lv_translation_set_language geradas pela UI
+CONFIG_LV_USE_TRANSLATION=y
+
+# Habilita atribuição de nomes aos widgets/objetos (LVGL v9 Object Name)
+# Necessário para as funções lv_obj_set_name e lv_obj_set_name_static geradas pela UI
+CONFIG_LV_USE_OBJ_NAME=y
+
+# Habilita fontes padrão Montserrat no LVGL v9 (fallback seguro para LV_FONT_DEFAULT)
+CONFIG_LV_FONT_MONTSERRAT_8=y
+CONFIG_LV_FONT_MONTSERRAT_10=y
+CONFIG_LV_FONT_MONTSERRAT_12=y
+CONFIG_LV_FONT_MONTSERRAT_14=y
+CONFIG_LV_FONT_MONTSERRAT_16=y
+
+# Tamanho da memória Flash SPI configurada para 4MB
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+
+
+# Tabela de partições customizada para acomodar os 2.44 MB de firmware da UI LVGL v9
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+
+
+
+

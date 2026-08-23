@@ -1,53 +1,47 @@
-# Generated file, do not edit.
-# This file is used to compile the UI Project created by the Editor.
-# See `user_config.cmake` as a way to add your own source files here
-# Only set project if this is the top-level CMakeLists.txt
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  cmake_minimum_required(VERSION 3.10)
-  # can be customized
-  project(LVGLProject)
-  set(IS_TOP_LEVEL TRUE)
+# ============================================================================
+# CMakeLists.txt para o Componente de Interface Gráfica (UI LVGL) no ESP-IDF
+# ============================================================================
+# Este arquivo registra o componente `ui` gerado pelo editor LVGL / LVGL Flow,
+# permitindo sua compilação transparente pelo sistema CMake do ESP-IDF.
+
+if(COMMAND idf_component_register)
+    # Busca recursiva de todos os arquivos C do componente da interface
+    file(GLOB_RECURSE UI_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.c")
+
+    # Registro do componente no ESP-IDF
+    idf_component_register(
+        SRCS ${UI_SOURCES}
+        INCLUDE_DIRS 
+            "."
+            ".."
+            "components"
+            "fonts"
+            "images"
+            "screens"
+            "widgets"
+
+        REQUIRES lvgl
+    )
+
+    # Define a macro LV_LVGL_H_INCLUDE_SIMPLE para que os arquivos C/H gerados pela UI
+    # façam o include direto de "lvgl.h" (padrão ESP-IDF / Component Manager) em vez de "lvgl/lvgl.h"
+    target_compile_definitions(${COMPONENT_LIB} PUBLIC LV_LVGL_H_INCLUDE_SIMPLE)
 else()
-  set(IS_TOP_LEVEL FALSE)
-endif()
-# Handles giving component libraries unique names when included as subprojects.
-if(DEFINED LVGL_COMPONENT_LIB_NAME)
-  set(LIB_NAME ${LVGL_COMPONENT_LIB_NAME})
-else()
-  set(LIB_NAME lib-ui)
-endif()
+    # Compatibilidade mantida para compilação Desktop/Simulador caso necessário
+    if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+      cmake_minimum_required(VERSION 3.10)
+      project(LVGLProject)
+    endif()
 
-# Include user source files
-include(${CMAKE_CURRENT_LIST_DIR}/user_config.cmake)
-set(LV_EDITOR_USER_SOURCES ${LV_EDITOR_PROJECT_SOURCES})
-# Reset project sources
-set(LV_EDITOR_PROJECT_SOURCES)
-# Include generated list of .c files
-include(${CMAKE_CURRENT_LIST_DIR}/file_list_gen.cmake)
+    if(DEFINED LVGL_COMPONENT_LIB_NAME)
+      set(LIB_NAME ${LVGL_COMPONENT_LIB_NAME})
+    else()
+      set(LIB_NAME lib-ui)
+    endif()
 
-# Create the UI sources as a library
-add_library(${LIB_NAME} ${LV_EDITOR_PROJECT_SOURCES})
-if(LV_EDITOR_USER_SOURCES)
-  add_library(${LIB_NAME}_user OBJECT ${LV_EDITOR_USER_SOURCES})
-  target_link_libraries(${LIB_NAME} PUBLIC $<TARGET_OBJECTS:${LIB_NAME}_user>)
-endif()
-if(DEFINED LV_EDITOR_COMPONENT_LIB_LIST)
-  target_link_libraries(${LIB_NAME} PUBLIC ${LV_EDITOR_COMPONENT_LIB_LIST})
-endif()
-if(DEFINED LV_EDITOR_COMPONENT_INCLUDE_DIRS)
-  target_include_directories(${LIB_NAME} PUBLIC ${LV_EDITOR_COMPONENT_INCLUDE_DIRS})
-  if(LV_EDITOR_USER_SOURCES)
-    target_include_directories(${LIB_NAME}_user PRIVATE ${LV_EDITOR_COMPONENT_INCLUDE_DIRS})
-  endif()
-endif()
-if(TARGET lvgl)
-  target_link_libraries(${LIB_NAME} PUBLIC lvgl)
-  if(LV_EDITOR_USER_SOURCES)
-    target_link_libraries(${LIB_NAME}_user PUBLIC lvgl)
-  endif()
-endif()
+    include(${CMAKE_CURRENT_LIST_DIR}/user_config.cmake OPTIONAL)
+    include(${CMAKE_CURRENT_LIST_DIR}/file_list_gen.cmake OPTIONAL)
 
-# Add the project folder as include folder
-target_include_directories(${LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-# Set include directories for the project This will include the LVGL includes
-target_include_directories(${LIB_NAME} PRIVATE ${COMMON_INCLUDE_DIRS})
+    add_library(${LIB_NAME} ${LV_EDITOR_PROJECT_SOURCES})
+    target_include_directories(${LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+endif()

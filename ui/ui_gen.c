@@ -100,7 +100,11 @@ lv_subject_t subject_home_artAtual;
 
 void ui_init_gen(const char * asset_path)
 {
+    if (asset_path == NULL) {
+        asset_path = "";
+    }
     char buf[256];
+
 
     /* When running from the editor the theme set from the XML should overwrite this */
 #if !defined(LV_EDITOR_PREVIEW)
@@ -230,9 +234,6 @@ void ui_init_gen(const char * asset_path)
         lv_translation_set_language(translation_languages[0]);
     #endif
 
-#if defined(LV_USE_XML) && LV_USE_XML
-    /* Register widgets */
-
     /* Check all fonts / default if needed. This prevents fonts that are used in one target but
        defined in another from causing assertion failures during rendering of the Preview. */
     check_font(&font_cousine_regular_8, "font_cousine_regular_8");
@@ -241,6 +242,10 @@ void ui_init_gen(const char * asset_path)
     check_font(&font_cousine_regular_7, "font_cousine_regular_7");
     check_font(&font_cousine_regular_9, "font_cousine_regular_9");
     check_font(&font_cousine_bold_9, "font_cousine_bold_9");
+
+#if defined(LV_USE_XML) && LV_USE_XML
+    /* Register widgets */
+
 
     /* Register fonts */
     lv_xml_register_font(NULL, "font_cousine_regular_8", font_cousine_regular_8);
